@@ -7,8 +7,14 @@ token = config['token']
 request_url = config['request_url']
 make_requests = (config['make_requests'] == 'True')
 save_info = (config['save_info'] == 'True')
+matches_saving_file = config['matches_saving_file']
+teams_saving_file = config['teams_saving_file']
+players_saving_file = config['players_saving_file']
 
 def make_request_teams():
+    r"""Получает данные о командах с сервера при запуске.
+    
+    Если сервер не отвечает или make_requests=False, то возвращает None"""
     if not make_requests:
         return None
     response = requests.get(request_url + "/teams", headers={"Authorization": token})
@@ -19,6 +25,9 @@ def make_request_teams():
     return teams
 
 def make_request_players(players_id):
+    r"""Получает данные о игроках с сервера при запуске.
+    
+    Если сервер не отвечает или make_requests=False, то возвращает None"""
     if not make_requests:
         return None
     players = pd.DataFrame({"id": [], "name": [], "surname": [], "number": []})
@@ -31,6 +40,9 @@ def make_request_players(players_id):
     return players
         
 def make_request_matches():
+    r"""Получает данные о матчах с сервера при запуске.
+    
+    Если сервер не отвечает или make_requests=False, то возвращает None"""
     if not make_requests:
         return None
     response = requests.get(request_url + "/matches", headers={"Authorization": token})
@@ -40,53 +52,55 @@ def make_request_matches():
     matches = pd.DataFrame(matches)
     return matches
 
-def init():
+def init(more_info=False):
+    r"""Возвращает переменные teams, matches, players.
+    
+    Если сервер не работает или make_requests=False, то берёт сохранённые данные. Если save_info=True, то сохраняет данные
+
+    Если more_info=True, то также возвращает получены ли переменные от сервера. (True - данные получены от сервера)
+    """
     teams = make_request_teams()
-    if type(teams) != pd.DataFrame:
-        teams = pd.read_csv('teams.csv')
+    teams_from_server = True
+    if teams is None:
+        teams_from_server = False
+        teams = pd.read_csv(teams_saving_file)
     elif save_info:
-        teams.to_csv('teams.csv')
+        teams.to_csv(teams_saving_file)
 
     matches = make_request_matches()
-    if type(matches) != pd.DataFrame:
-        matches = pd.read_csv('matches.csv')
+    matches_from_server = True
+    if matches is None:
+        matches_from_server = False
+        matches = pd.read_csv(matches_saving_file)
     elif save_info:
-        matches.to_csv('matches.csv')
+        matches.to_csv(matches_saving_file)
 
-    players_id = []
-    for lst in teams['players']:
+    players_and_teams_id = pd.DataFrame({'id': [], 'team_id': []})
+    for i in range(len(teams)):
+        lst = teams['players'][i]
+        team_id = teams['id'][i]
         for x in lst:
-            players_id.append(x)
-    players_id.sort()
-    players_id = list(dict.fromkeys(players_id))
-    players = make_request_players(players_id)
-    if type(players) != pd.DataFrame:
-        players = pd.read_csv('players.csv')
-    elif save_info:
-        players.to_csv('players.csv')
+            players_and_teams_id.loc[len(players_and_teams_id)] = {'id': x, 'team_id': team_id}
+    players = make_request_players(players_and_teams_id['id'])
+    players_from_server = True
+    if players is None:
+        players_from_server = False
+        players = pd.read_csv(players_saving_file)
+    else:
+        players = pd.merge(players, players_and_teams_id, on='id')
+        if save_info:
+            players.to_csv(players_saving_file)
+    players['name'] = players['name'].apply(lambda x: '' if pd.isna(x) else x)
+    players['surname'] = players['surname'].apply(lambda x: '' if pd.isna(x) else x)
 
+    if more_info:
+        return teams, matches, players, teams_from_server, matches_from_server, players_from_server
     return teams, matches, players
 
-teams, matches, players = init()
-
-
-def print_players():
-    """Вывести список игроков в консоль"""
-    for i in range(len(players)):
-        print(players['name'][i], players['surname'][i])
-
-def get_request():
-    request = input().split(maxsplit=1)
-    if request[0] == "exit":
-        return "exit", []
-    elif request[0] == "stats?":
-        return "stats", [request[1][1:-1]]
-    elif request[0] == "versus?":
-        request[1] = request[1].split()
-        return "versus", [int(request[1]), int(request[2])]
+teams, matches, players, teams_from_server, matches_from_server, players_from_server = init(more_info=True)
 
 def stats(team_name):
-    """Возвращает статистику по команде (количество побед, поражений, разница забитых и пропущенных голов)"""
+    """Возвращает статистику по команде (количество побед, поражений, разница между забитыми и пропущенными голами)"""
     if len(teams[teams['name'] == team_name]) == 0:
         return 0, 0, 0
     team_id = list(teams[teams['name'] == team_name]['id'])[0]
@@ -98,16 +112,65 @@ def stats(team_name):
         - matches[matches['team2'] == team_id]['team1_score'].sum() - matches[matches['team1'] == team_id]['team2_score'].sum()
     return wins, losings, int(goals)
 
-def versus():
-    return
+def get_team(player_id):
+    """Возвращает id команды по id игрока. Если такого игрока нет, то возвращает None"""
+    if len(players[players['id'] == player_id]) != 1:
+        return None
+    return list(players[players['id'] == player_id]['team_id'])[0]
+
+def versus(player1_id, player2_id):
+    team1_id = get_team(player1_id)
+    team2_id = get_team(player2_id)
+    if team1_id is None or team2_id is None or team1_id == team2_id:
+        return 0
+    return len(matches[((matches['team1'] == team1_id) & (matches['team2'] == team2_id)) |\
+                       ((matches['team1'] == team2_id) & (matches['team2'] == team1_id))])
+
+def get_request():
+    """Получает запрос от пользователя"""
+    request = input().split(maxsplit=1)
+    if request[0] == "exit":
+        return "exit", []
+    elif request[0] == "info":
+        return "info", []
+    elif request[0] == "stats?":
+        return "stats", [request[1][1:-1]]
+    elif request[0] == "versus?":
+        request[1] = request[1].split()
+        return "versus", [int(request[1][0]), int(request[1][1])]
+    else:
+        return "?", []
+    
+def get_list_of_players():
+    """Возвращает список игроков в лексикографическом порядке"""
+    lst = []
+    for i in range(len(players)):
+        lst.append(str(players['name'][i]) + ' ' + str(players['surname'][i]))
+    lst.sort()
+    return lst
+
+def process_request(request_type, params):
+    """Обрабатывает запрос от пользователя"""
+    if request_type == "exit":
+        return False
+    
+    if request_type == "stats":
+        wins, losings, goals = stats(params[0])
+        print(wins, losings, goals)
+    elif request_type == "versus":
+        print(versus(params[0], params[1]))
+    else:
+        print("Unknow request")
+    return True
 
 if __name__ == "__main__":
-    print_players()
+    all_players = get_list_of_players()
+    for x in all_players:
+        print(x)
+
     while True:
         request_type, params = get_request()
-        if request_type == "exit":
+        if not process_request(request_type, params):
             break
-        elif request_type == "stats":
-            wins, losings, goals = stats(params[0])
-            print(wins, losings, goals)
+        
 
