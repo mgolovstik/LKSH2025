@@ -8,7 +8,8 @@ config = {
         'save_info': "False",\
         'matches_saving_file': "test_data/matches_test.csv",\
         'teams_saving_file': "test_data/teams_test.csv",\
-        'players_saving_file': "test_data/players_test.csv"
+        'players_saving_file': "test_data/players_test.csv",\
+        'goals_saving_file': "test_data/goals_test.csv"
         }
 sdb = main.Sport_Database(config=config)
 

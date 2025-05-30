@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Stats{% endblock %}
+
+{% block content %}
+  <h1>Stats</h1>
+  <form action="/front/stats" method="get">
+    <label>Название команды: </label>
+    <input type="text" name="team_name" placeholder="Введите Название команды" value="{{ name }}"><br>
+    <input type="submit" value="Find data">
+  </form>
+  <p>Количество побед: {{ wins }}</p>
+  <p>Количество поражений: {{ loosings }}</p>
+  <p>Разница между забитыми голами и пропущенными: {{ goals }}</p>
+  <a href="{{ url_for('main_page') }}">Back to main page</a>
+{% endblock %}
