@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Versus{% endblock %}
+
+{% block content %}
+  <h1>Versus</h1>
+  <form action="/front/versus" method="get">
+    <label>Id первого игрока: </label>
+    <input type="text" name="player1_id" placeholder="Введите id" value="{{ player1_id }}"><br>
+    <label>Id второго игрока: </label>
+    <input type="text" name="player2_id" placeholder="Введите id" value="{{ player2_id }}"><br>
+    <input type="submit" value="Find data">
+  </form>
+  <p>Количество матчей между игроками: {{ count }}</p>
+  <a href="{{ url_for('main_page') }}">Back to main page</a>
+{% endblock %}

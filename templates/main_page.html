@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+  <h1>Welcome to my website!</h1>
+  <a href="{{ url_for('front_stats') }}">Запрос stats</a><br>
+  <a href="{{ url_for('front_versus') }}">Запрос versus</a><br>
+{% endblock %}
