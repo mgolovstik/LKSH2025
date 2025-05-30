@@ -71,4 +71,26 @@ versus_0_2 = sdb.versus(0, 2)
 print("0 vs 2:", versus_0_2)
 assert versus_0_2 == 0
 
+"""Тестирование функции goals"""
+goals_1 = sdb.goals(1)
+print("goals? 1:", goals_1)
+assert goals_1 == [{'match': 0, 'time': 41}, {'match': 2, 'time': 31}] or\
+        goals_1 == [{'match': 2, 'time': 31}, {'match': 0, 'time': 41}]
+
+goals_2 = sdb.goals(2)
+print("goals? 2:", goals_2)
+assert goals_2 == [{'match': 2, 'time': 30}]
+
+goals_9 = sdb.goals(9)
+print("goals? 9:", goals_9)
+assert goals_9 == [{'match': 4, 'time': 100}]
+
+goals_10 = sdb.goals(10)
+print("goals? 10:", goals_10)
+assert goals_10 == [{'match': 2, 'time': 10}]
+
+goals_unknow = sdb.goals(404)
+print("goals? unknow:", goals_unknow)
+assert goals_unknow == []
+
 print("OK")

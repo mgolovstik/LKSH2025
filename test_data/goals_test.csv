@@ -1,1 +1,6 @@
-id,player,match,minute
+id,player,match,time
+0,1,0,41
+1,2,2,30
+2,1,2,31
+3,10,2,10
+4,9,4,100
