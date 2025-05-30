@@ -41,16 +41,24 @@
 * /goals?player_id=<player_id> - список голов игрока с id <player_id> (id матча и время)
 * /lfr - последний неудачный запрос на сервер lksh и ответ на него
 * / - главная страница
+
+  ![image](https://github.com/user-attachments/assets/3de339f7-7c0b-4d6a-8169-a39f1908180d)
 * /front/stats - HTML-интерфейс для статистики команд
+
+  ![image](https://github.com/user-attachments/assets/f27ec252-ec22-4bd7-911a-fb088da8c893)
 * /front/versus - HTML-интерфейс для сравнения игроков
+
+  ![image](https://github.com/user-attachments/assets/62effbb1-ae92-4648-95db-188a97bfb3ac)
 
 ## Дополнительные параметры в .env
 * make_requests - Если False, то не будут отправляться запросы на сервер lksh, будут использоваться сохранённые данные
 * save_info - Если True, то будет локально сохранять полученные при запуске данные
+* port - Порт, с которого будет запускаться сервер
+* request_url - Адрес сервера, с которого берутся данные
 
 ## Docker
 
-Эту часть добавил [igel200](https://github.com/igel2000). Всё остальное я делал сам.
+Эту часть добавил [igel2000](https://github.com/igel2000). Всё остальное я делал сам.
 
 ### Самостоятельная сборка образа
 
